@@ -16,36 +16,36 @@
         </div>
         <div class="flex-none gap-2">
             <div id="adminStatus" class="hidden flex items-center gap-2">
-                <span class="badge badge-success font-bold">Yönetici Girişi Yapıldı</span>
-                <button onclick="logout()" class="btn btn-sm btn-outline btn-content">Çıkış Yap</button>
+                <span class="badge badge-success font-bold text-xs p-3">Yönetici Girişi Yapıldı</span>
+                <button onclick="logout()" class="btn btn-sm btn-outline btn-content">Çıkış</button>
             </div>
-            <button id="loginBtn" onclick="showLoginModal()" class="btn btn-sm btn-ghost">Admin Girişi</button>
+            <button id="loginBtn" onclick="showLoginModal()" class="btn btn-sm btn-ghost border border-white/30">Admin Girişi</button>
         </div>
     </div>
 
     <div class="container mx-auto p-4 md:p-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 text-center">
             <div class="stat bg-white rounded-box shadow">
-                <div class="stat-title text-gray-500 uppercase">Toplam Kitap</div>
+                <div class="stat-title text-gray-500 uppercase text-xs">Toplam Kitap</div>
                 <div id="statTotal" class="stat-value text-primary">0</div>
             </div>
             <div class="stat bg-white rounded-box shadow">
-                <div class="stat-title text-gray-500 uppercase">En Çok Kitap (Yazar)</div>
-                <div id="statTopAuthor" class="text-sm font-bold truncate text-secondary">...</div>
+                <div class="stat-title text-gray-500 uppercase text-xs">En Çok Kitap (Yazar)</div>
+                <div id="statTopAuthor" class="text-sm font-bold truncate text-secondary italic">...</div>
             </div>
             <div class="stat bg-white rounded-box shadow">
-                <div class="stat-title text-gray-500 uppercase">En Çok Kitap (Yayınevi)</div>
-                <div id="statTopPub" class="text-sm font-bold truncate text-secondary">...</div>
+                <div class="stat-title text-gray-500 uppercase text-xs">En Çok Kitap (Yayınevi)</div>
+                <div id="statTopPub" class="text-sm font-bold truncate text-secondary italic">...</div>
             </div>
             <div class="stat bg-white rounded-box shadow">
-                <div class="stat-title text-gray-500 uppercase">Okuyanlar Verisi</div>
-                <div id="statBorrowed" class="text-[10px] font-semibold overflow-y-auto max-h-12">...</div>
+                <div class="stat-title text-gray-500 uppercase text-xs">Okuyanlar Özeti</div>
+                <div id="statBorrowed" class="text-[10px] font-semibold text-gray-600 max-h-12 overflow-y-auto">...</div>
             </div>
         </div>
 
         <div class="flex flex-col lg:flex-row gap-8">
             <div class="w-full lg:w-1/4 bg-white p-6 rounded-box shadow-sm h-fit">
-                <h3 class="font-bold mb-4 flex items-center gap-2 border-b pb-2">🔍 Arama & Filtre</h3>
+                <h3 class="font-bold mb-4 border-b pb-2 flex items-center gap-2">🔍 Arama & Filtre</h3>
                 <input type="text" id="searchInput" placeholder="Kitap veya Yazar Ara..." class="input input-bordered w-full mb-4" onkeyup="filterBooks()" />
                 
                 <label class="label text-xs font-bold opacity-50 uppercase">Yayınevi</label>
@@ -55,21 +55,23 @@
 
                 <label class="label text-xs font-bold opacity-50 uppercase">Okuyan Kişi</label>
                 <select id="readerFilter" class="select select-bordered w-full mb-4 select-sm" onchange="filterBooks()">
-                    <option value="">Tüm Okuyanlar</option>
+                    <option value="">Herkesin Okudukları</option>
                 </select>
 
                 <div id="adminPanel" class="hidden mt-8 p-4 border-2 border-dashed border-primary rounded-lg bg-primary/5">
-                    <h4 class="font-bold text-primary mb-2 text-center">Toplu Kitap Yükleme</h4>
-                    <p class="text-[10px] mb-4 text-center opacity-70">Excel başlıkları: ISBN, Kitap Adı, Yazar, Yayınevi, Okuyan</p>
+                    <h4 class="font-bold text-primary mb-2 text-center text-sm">Toplu Kitap Yükleme</h4>
+                    <p class="text-[10px] mb-4 text-center opacity-60">Sütunlar: ISBN, Kitap Adı, Yazar, Yayınevi, Okuyan</p>
                     <input type="file" id="excelInput" class="hidden" accept=".xlsx, .xls" onchange="handleExcel(event)" />
-                    <button onclick="document.getElementById('excelInput').click()" class="btn btn-primary btn-sm w-full">EXCEL DOSYASI SEÇ</button>
-                    <div id="uploadProgress" class="mt-4 text-center text-xs font-bold text-secondary"></div>
+                    <button onclick="document.getElementById('excelInput').click()" class="btn btn-primary btn-sm w-full font-bold">EXCEL DOSYASI SEÇ</button>
+                    <div id="uploadProgress" class="mt-4 text-center text-xs font-bold text-secondary animate-pulse"></div>
                 </div>
             </div>
 
             <div class="w-full lg:w-3/4">
                 <div id="bookList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <div class="col-span-full text-center py-20 opacity-50">Kütüphane rafları yükleniyor, lütfen bekleyin...</div>
+                    <div class="col-span-full text-center py-20 opacity-40 italic">
+                        Kütüphane rafları düzenleniyor...
+                    </div>
                 </div>
             </div>
         </div>
@@ -77,13 +79,13 @@
 
     <dialog id="login_modal" class="modal">
         <div class="modal-box">
-            <h3 class="font-bold text-lg">Admin Paneline Giriş</h3>
+            <h3 class="font-bold text-lg">Yönetici Girişi</h3>
             <div class="py-4 space-y-4">
                 <input type="email" id="loginEmail" placeholder="E-posta" class="input input-bordered w-full" />
                 <input type="password" id="loginPass" placeholder="Şifre" class="input input-bordered w-full" />
             </div>
             <div class="modal-action">
-                <button class="btn btn-primary w-full" onclick="login()">Sisteme Gir</button>
+                <button class="btn btn-primary w-full" onclick="login()">Giriş Yap</button>
             </div>
         </div>
     </dialog>
@@ -93,6 +95,7 @@
         import { getFirestore, collection, getDocs, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+        // Senin Bilgilerin
         const firebaseConfig = {
             apiKey: "AIzaSyCzFiK-_AzAOWq9Ffm2rXMAXI48GZJtsWI",
             authDomain: "mylibrary-1d84a.firebaseapp.com",
@@ -108,6 +111,7 @@
 
         let allBooks = [];
 
+        // KİTAPLARI GETİR
         async function fetchBooks() {
             try {
                 const q = query(collection(db, "books"), orderBy("title", "asc"));
@@ -118,32 +122,32 @@
                 updateStats();
                 fillFilters();
             } catch (e) {
-                console.error("Veri hatası:", e);
-                document.getElementById('bookList').innerHTML = "Veritabanı boş veya bağlantı hatası var.";
+                console.error("Hata:", e);
+                document.getElementById('bookList').innerHTML = "Veritabanı bağlantısı bekleniyor veya boş.";
             }
         }
 
+        // KİTAPLARI EKRANA ÇİZ
         function renderBooks(data) {
             const list = document.getElementById('bookList');
-            if(data.length === 0) { list.innerHTML = "Görüntülenecek kitap bulunamadı."; return; }
+            if(data.length === 0) { list.innerHTML = "Henüz kitap eklenmemiş veya arama sonucu bulunamadı."; return; }
             list.innerHTML = data.map(book => `
-                <div class="card bg-white shadow-sm hover:shadow-md border border-base-300 transition-all">
-                    <div class="card-body p-4">
-                        <h2 class="card-title text-sm font-bold text-primary uppercase leading-tight">${book.title}</h2>
-                        <p class="text-xs font-semibold opacity-70">👤 ${book.author}</p>
-                        <div class="mt-2">
-                             <span class="badge badge-outline badge-xs opacity-50 uppercase font-bold">${book.publisher}</span>
-                        </div>
-                        <div class="mt-4 flex flex-wrap gap-1">
-                            ${book.readers && book.readers.length > 0 ? 
-                              book.readers.map(r => `<span class="badge badge-secondary badge-xs px-2 py-2 font-bold">${r}</span>`).join('') : 
-                              '<span class="text-[10px] italic opacity-30">Okunmadı</span>'}
+                <div class="card bg-white shadow-sm hover:shadow-md border border-base-300 transition-all rounded-lg overflow-hidden">
+                    <div class="p-4">
+                        <h2 class="text-sm font-black text-primary uppercase leading-tight mb-1">${book.title || 'İsimsiz'}</h2>
+                        <p class="text-[11px] font-bold opacity-60 italic mb-3 text-gray-700">👤 ${book.author || 'Bilinmiyor'}</p>
+                        <div class="flex items-center justify-between mt-auto">
+                             <span class="badge badge-outline badge-xs text-[9px] uppercase border-gray-300">${book.publisher || '-'}</span>
+                             <div class="flex gap-1">
+                                ${(book.readers || []).map(r => `<span class="badge badge-secondary badge-xs font-bold px-1">${r}</span>`).join('')}
+                             </div>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
+        // İSTATİSTİKLERİ HESAPLA
         function updateStats() {
             document.getElementById('statTotal').innerText = allBooks.length;
             const authors = {}, pubs = {}, readersCount = {};
@@ -160,6 +164,7 @@
             document.getElementById('statBorrowed').innerText = Object.entries(readersCount).map(e => `${e[0]}: ${e[1]}`).join(' | ');
         }
 
+        // FİLTRELERİ DOLDUR
         function fillFilters() {
             const pSel = document.getElementById('pubFilter'), rSel = document.getElementById('readerFilter');
             const pUnique = [...new Set(allBooks.map(b => b.publisher).filter(Boolean))].sort();
@@ -168,6 +173,7 @@
             rSel.innerHTML = '<option value="">Tüm Okuyanlar</option>' + rUnique.map(r => `<option value="${r}">${r}</option>`).join('');
         }
 
+        // ARAMA FONKSİYONU
         window.filterBooks = () => {
             const s = document.getElementById('searchInput').value.toLowerCase();
             const p = document.getElementById('pubFilter').value;
@@ -181,6 +187,7 @@
             renderBooks(filtered);
         }
 
+        // --- AKILLI EXCEL YÜKLEME ---
         window.handleExcel = async (e) => {
             const file = e.target.files[0];
             const reader = new FileReader();
@@ -193,45 +200,62 @@
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     const json = XLSX.utils.sheet_to_json(sheet);
 
-                    progress.innerText = "Yükleme Başlatılıyor...";
+                    progress.innerText = "Yükleme Hazırlanıyor...";
 
                     for (let i = 0; i < json.length; i++) {
                         const row = json[i];
-                        const okuyan = row["Okuyan"] || "";
+                        
+                        // Akıllı Başlık Bulucu
+                        const getVal = (possibleNames) => {
+                            const key = Object.keys(row).find(k => 
+                                possibleNames.includes(k.trim().toLowerCase())
+                            );
+                            return key ? row[key] : null;
+                        };
+
+                        const title = getVal(["kitap adı", "kitap adi", "kitapadı", "title", "kitap_adi", "adı"]) || "İsimsiz Kitap";
+                        const author = getVal(["yazar", "author", "yazarı", "yazari", "yazar adı"]) || "Bilinmeyen Yazar";
+                        const pub = getVal(["yayınevi", "yayinevi", "publisher", "basımevi"]) || "Bilinmeyen Yayınevi";
+                        const okuyan = getVal(["okuyan", "reader", "okuyanlar", "okuyan kişi"]) || "";
+                        
                         const readersArr = okuyan ? okuyan.toString().split(',').map(s => s.trim()) : [];
 
                         await addDoc(collection(db, "books"), {
-                            isbn: row["ISBN"] ? row["ISBN"].toString() : "",
-                            title: row["Kitap Adı"] || "İsimsiz Kitap",
-                            author: row["Yazar"] || "Bilinmeyen Yazar",
-                            publisher: row["Yayınevi"] || "Bilinmeyen Yayınevi",
+                            isbn: getVal(["isbn", "is b n"]) ? getVal(["isbn", "is b n"]).toString() : "",
+                            title: title.toString(),
+                            author: author.toString(),
+                            publisher: pub.toString(),
                             readers: readersArr
                         });
 
-                        progress.innerText = `İşleniyor: ${i+1} / ${json.length} Kitap`;
+                        progress.innerText = `🔄 İşleniyor: ${i+1} / ${json.length}`;
                     }
-                    alert("Tüm kitaplar başarıyla yüklendi!");
+                    alert("Tüm kitaplar başarıyla kütüphaneye eklendi!");
                     location.reload();
                 } catch (err) {
-                    alert("Yükleme sırasında hata: " + err.message);
+                    alert("Yükleme sırasında bir hata oluştu: " + err.message);
                 }
             };
             reader.readAsArrayBuffer(file);
         };
 
+        // ADMIN GİRİŞ ÇIKIŞ
         window.showLoginModal = () => document.getElementById('login_modal').showModal();
         window.login = async () => {
             try {
                 await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPass').value);
                 document.getElementById('login_modal').close();
-            } catch (e) { alert("Hatalı e-posta veya şifre!"); }
+            } catch (e) { alert("E-posta veya şifre hatalı!"); }
         };
         window.logout = () => signOut(auth);
+
         onAuthStateChanged(auth, u => {
             const adminP = document.getElementById('adminPanel'), status = document.getElementById('adminStatus'), btn = document.getElementById('loginBtn');
             if(u) { adminP.classList.remove('hidden'); status.classList.remove('hidden'); btn.classList.add('hidden'); }
             else { adminP.classList.add('hidden'); status.classList.add('hidden'); btn.classList.remove('hidden'); }
         });
+
+        // Başlat
         fetchBooks();
     </script>
 </body>
