@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kitaplar — Kütüphanem</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.sort-icon { display:inline-block;margin-left:4px;opacity:.4; }
+th.sorted .sort-icon { opacity:1; }
+</style>
+</head>
+<body>
+<nav id="nav"></nav>
+
+<!-- Read modal -->
+<div class="modal-overlay" id="read-modal">
+  <div class="modal-box">
+    <h2 class="modal-title">📖 Okuma Kaydı</h2>
+    <div id="modal-book-info" style="margin-bottom:20px;padding:14px;background:var(--bg3);border-radius:10px;font-size:14px;"></div>
+    <div class="form-group">
+      <label>Okuyanın Adı</label>
+      <input type="text" id="reader-name" placeholder="Ad Soyad">
+    </div>
+    <div id="current-readers" style="margin-bottom:12px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">İptal</button>
+      <button class="btn btn-primary" onclick="saveReader()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Kitap Listesi</h1>
+      <p class="page-sub" id="result-count">Yükleniyor...</p>
+    </div>
+    <button class="btn btn-ghost" onclick="exportCSV()" style="font-size:13px;">⬇ CSV İndir</button>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="Kitap adı, yazar veya ISBN ara..." oninput="filterBooks()">
+    <select id="filter-publisher" onchange="filterBooks()"><option value="">Tüm Yayınevleri</option></select>
+    <select id="filter-author" onchange="filterBooks()"><option value="">Tüm Yazarlar</option></select>
+    <select id="filter-read" onchange="filterBooks()">
+      <option value="">Tüm Durumlar</option>
+      <option value="read">Okunmuş</option>
+      <option value="unread">Okunmamış</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('title')">Kitap Adı <span class="sort-icon">↕</span></th>
+          <th onclick="sortBy('author')">Yazar <span class="sort-icon">↕</span></th>
+          <th onclick="sortBy('publisher')">Yayınevi <span class="sort-icon">↕</span></th>
+          <th>ISBN</th>
+          <th>Okuyan</th>
+          <th style="text-align:right;padding-right:20px;">İşlem</th>
+        </tr>
+      </thead>
+      <tbody id="books-tbody">
+        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted);">Yükleniyor...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination" id="pagination"></div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+let allBooks = [], filtered = [], currentPage = 1, sortField = 'title', sortDir = 1;
+const PER_PAGE = 25;
+let selectedBookId = null;
+
+async function onAuthReady() {
+  const snap = await db.collection('books').orderBy('title').get();
+  allBooks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  populateFilters();
+  filterBooks();
+}
+
+function populateFilters() {
+  const pubs = [...new Set(allBooks.map(b => b.publisher).filter(Boolean))].sort();
+  const auths = [...new Set(allBooks.map(b => b.author).filter(Boolean))].sort();
+  const pSel = document.getElementById('filter-publisher');
+  const aSel = document.getElementById('filter-author');
+  pubs.forEach(p => { const o = document.createElement('option'); o.value = p; o.textContent = p; pSel.appendChild(o); });
+  auths.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; aSel.appendChild(o); });
+}
+
+function filterBooks() {
+  const q = document.getElementById('search-input').value.toLowerCase().trim();
+  const pub = document.getElementById('filter-publisher').value;
+  const auth = document.getElementById('filter-author').value;
+  const readF = document.getElementById('filter-read').value;
+
+  filtered = allBooks.filter(b => {
+    const matchQ = !q || (b.title||'').toLowerCase().includes(q) ||
+      (b.author||'').toLowerCase().includes(q) || (b.isbn||'').includes(q);
+    const matchP = !pub || b.publisher === pub;
+    const matchA = !auth || b.author === auth;
+    const isRead = b.readBy && b.readBy.length > 0;
+    const matchR = !readF || (readF === 'read' ? isRead : !isRead);
+    return matchQ && matchP && matchA && matchR;
+  });
+
+  sortFiltered();
+  currentPage = 1;
+  render();
+}
+
+function sortBy(field) {
+  if (sortField === field) sortDir *= -1;
+  else { sortField = field; sortDir = 1; }
+  document.querySelectorAll('thead th').forEach(th => th.classList.remove('sorted'));
+  const idx = ['title','author','publisher'].indexOf(field);
+  if (idx >= 0) document.querySelectorAll('thead th')[idx].classList.add('sorted');
+  sortFiltered();
+  render();
+}
+
+function sortFiltered() {
+  filtered.sort((a,b) => {
+    const av = (a[sortField] || '').toLowerCase();
+    const bv = (b[sortField] || '').toLowerCase();
+    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  });
+}
+
+function render() {
+  const start = (currentPage - 1) * PER_PAGE;
+  const page = filtered.slice(start, start + PER_PAGE);
+  const isAdmin = window._userRole === 'admin';
+
+  document.getElementById('result-count').textContent =
+    `${filtered.length} kitap bulundu${allBooks.length !== filtered.length ? ' (' + allBooks.length + ' toplam)' : ''}`;
+
+  const tbody = document.getElementById('books-tbody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">🔍</div><p>Sonuç bulunamadı.</p></div></td></tr>`;
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = page.map(b => {
+    const readers = (b.readBy || []);
+    const readBadge = readers.length > 0
+      ? readers.map(r => `<span class="badge badge-read">${r}</span>`).join(' ')
+      : `<span class="badge badge-unread">Okunmamış</span>`;
+    return `
+      <tr>
+        <td><strong style="font-size:14px;">${esc(b.title)}</strong></td>
+        <td>${esc(b.author||'—')}</td>
+        <td>${esc(b.publisher||'—')}</td>
+        <td style="font-family:monospace;font-size:13px;color:var(--muted);">${esc(b.isbn||'—')}</td>
+        <td>${readBadge}</td>
+        <td style="text-align:right;padding-right:16px;">
+          <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openReadModal('${b.id}')">
+            📝 Okuma
+          </button>
+          ${isAdmin ? `<a href="admin.html?edit=${b.id}" class="btn btn-ghost" style="padding:6px 12px;font-size:12px;margin-left:4px;">✏️</a>` : ''}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = Math.ceil(filtered.length / PER_PAGE);
+  if (total <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+  let html = '';
+  const prev = currentPage > 1;
+  const next = currentPage < total;
+  html += `<button class="page-btn" ${!prev?'disabled':''} onclick="goPage(${currentPage-1})">‹</button>`;
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || (i >= currentPage-2 && i <= currentPage+2)) {
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (i === currentPage-3 || i === currentPage+3) {
+      html += `<span style="color:var(--muted);padding:0 4px;">…</span>`;
+    }
+  }
+  html += `<button class="page-btn" ${!next?'disabled':''} onclick="goPage(${currentPage+1})">›</button>`;
+  document.getElementById('pagination').innerHTML = html;
+}
+
+function goPage(p) { currentPage = p; render(); window.scrollTo(0,0); }
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// READ MODAL
+function openReadModal(bookId) {
+  selectedBookId = bookId;
+  const book = allBooks.find(b => b.id === bookId);
+  document.getElementById('modal-book-info').innerHTML =
+    `<strong>${esc(book.title)}</strong><br><span style="color:var(--muted);font-size:13px;">${esc(book.author||'')} ${book.publisher ? '· ' + esc(book.publisher) : ''}</span>`;
+  document.getElementById('reader-name').value = '';
+  renderCurrentReaders(book.readBy || []);
+  document.getElementById('read-modal').classList.add('open');
+}
+
+function renderCurrentReaders(readers) {
+  const el = document.getElementById('current-readers');
+  if (readers.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div style="font-size:13px;color:var(--muted);margin-bottom:8px;">Mevcut okuyanlar:</div>` +
+    readers.map((r,i) => `
+      <span class="badge badge-read" style="margin-right:6px;margin-bottom:6px;">
+        ${esc(r)}
+        <span style="margin-left:4px;cursor:pointer;opacity:.7;" onclick="removeReader(${i})">✕</span>
+      </span>
+    `).join('');
+}
+
+async function removeReader(idx) {
+  const book = allBooks.find(b => b.id === selectedBookId);
+  book.readBy.splice(idx, 1);
+  await db.collection('books').doc(selectedBookId).update({ readBy: book.readBy });
+  renderCurrentReaders(book.readBy);
+  render();
+}
+
+async function saveReader() {
+  const name = document.getElementById('reader-name').value.trim();
+  if (!name) return;
+  const book = allBooks.find(b => b.id === selectedBookId);
+  const readBy = [...(book.readBy || [])];
+  if (!readBy.includes(name)) readBy.push(name);
+  await db.collection('books').doc(selectedBookId).update({ readBy });
+  book.readBy = readBy;
+  renderCurrentReaders(readBy);
+  document.getElementById('reader-name').value = '';
+  render();
+}
+
+function closeModal() { document.getElementById('read-modal').classList.remove('open'); }
+document.getElementById('read-modal').addEventListener('click', e => { if(e.target === e.currentTarget) closeModal(); });
+
+// CSV export
+function exportCSV() {
+  const headers = ['ISBN', 'Kitap Adı', 'Yazar', 'Yayınevi', 'Okuyanlar'];
+  const rows = filtered.map(b => [
+    b.isbn||'', b.title||'', b.author||'', b.publisher||'', (b.readBy||[]).join('; ')
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'kutuphane.csv';
+  a.click();
+}
+</script>
+</body>
+</html>

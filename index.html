@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giriş — Kütüphanem</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-title">📚 Kütüphanem</div>
+    <div class="auth-sub">Koleksiyonunuza erişmek için giriş yapın</div>
+
+    <div class="alert alert-error" id="err-msg"></div>
+
+    <div class="form-group">
+      <label>E-posta adresi</label>
+      <input type="email" id="email" placeholder="ornek@mail.com" autocomplete="email">
+    </div>
+
+    <div class="form-group">
+      <label>Şifre</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:15px;margin-top:8px;" onclick="doLogin()" id="login-btn">
+      Giriş Yap
+    </button>
+
+    <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--muted);">
+      Hesabınız yok mu? <a href="#" onclick="toggleMode()" id="mode-link">Kayıt Ol</a>
+    </p>
+    <div id="register-section" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+      <div class="form-group">
+        <label>Ad Soyad</label>
+        <input type="text" id="display-name" placeholder="Adınız Soyadınız">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:15px;" onclick="doRegister()">
+        Hesap Oluştur
+      </button>
+      <p style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center;">Not: Yeni hesaplar admin onayı gerektirir.</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script>
+let registerMode = false;
+
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    const doc = await db.collection('users').doc(user.uid).get();
+    if (doc.exists && doc.data().approved) {
+      window.location = 'dashboard.html';
+    }
+  }
+});
+
+function toggleMode() {
+  registerMode = !registerMode;
+  document.getElementById('register-section').style.display = registerMode ? 'block' : 'none';
+  document.getElementById('mode-link').textContent = registerMode ? 'Giriş Yap' : 'Kayıt Ol';
+  document.getElementById('login-btn').textContent = registerMode ? '← Giriş Yap' : 'Giriş Yap';
+}
+
+function showError(msg) {
+  const el = document.getElementById('err-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value;
+  if (!email || !pass) return showError('Lütfen tüm alanları doldurun.');
+  try {
+    const cred = await auth.signInWithEmailAndPassword(email, pass);
+    const doc = await db.collection('users').doc(cred.user.uid).get();
+    if (!doc.exists || !doc.data().approved) {
+      auth.signOut();
+      showError('Hesabınız henüz onaylanmamış. Lütfen admin ile iletişime geçin.');
+      return;
+    }
+    window.location = 'dashboard.html';
+  } catch(e) {
+    showError('E-posta veya şifre hatalı.');
+  }
+}
+
+async function doRegister() {
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value;
+  const name = document.getElementById('display-name').value.trim();
+  if (!email || !pass || !name) return showError('Lütfen tüm alanları doldurun.');
+  if (pass.length < 6) return showError('Şifre en az 6 karakter olmalıdır.');
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await cred.user.updateProfile({ displayName: name });
+    await db.collection('users').doc(cred.user.uid).set({
+      name, email, role: 'user', approved: false, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    auth.signOut();
+    showError('Hesabınız oluşturuldu. Admin onayını bekleyin.');
+  } catch(e) {
+    showError(e.message);
+  }
+}
+
+document.addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>
