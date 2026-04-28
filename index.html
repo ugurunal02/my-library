@@ -1,262 +1,117 @@
 <!DOCTYPE html>
-<html lang="tr" data-theme="light">
+<html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dijital Kütüphanem</title>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giriş — Kütüphanem</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-base-200 min-h-screen">
+<body>
+<div class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-title">📚 Kütüphanem</div>
+    <div class="auth-sub">Koleksiyonunuza erişmek için giriş yapın</div>
 
-    <div class="navbar bg-primary text-primary-content shadow-lg px-4 md:px-12">
-        <div class="flex-1">
-            <a class="btn btn-ghost text-xl font-bold uppercase tracking-widest">Kütüphanem</a>
-        </div>
-        <div class="flex-none gap-2">
-            <div id="adminStatus" class="hidden flex items-center gap-2">
-                <span class="badge badge-success font-bold text-xs p-3">Yönetici Girişi Yapıldı</span>
-                <button onclick="logout()" class="btn btn-sm btn-outline btn-content">Çıkış</button>
-            </div>
-            <button id="loginBtn" onclick="showLoginModal()" class="btn btn-sm btn-ghost border border-white/30">Admin Girişi</button>
-        </div>
+    <div class="alert alert-error" id="err-msg"></div>
+
+    <div class="form-group">
+      <label>E-posta adresi</label>
+      <input type="email" id="email" placeholder="ornek@mail.com" autocomplete="email">
     </div>
 
-    <div class="container mx-auto p-4 md:p-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 text-center">
-            <div class="stat bg-white rounded-box shadow">
-                <div class="stat-title text-gray-500 uppercase text-xs">Toplam Kitap</div>
-                <div id="statTotal" class="stat-value text-primary">0</div>
-            </div>
-            <div class="stat bg-white rounded-box shadow">
-                <div class="stat-title text-gray-500 uppercase text-xs">En Çok Kitap (Yazar)</div>
-                <div id="statTopAuthor" class="text-sm font-bold truncate text-secondary italic">...</div>
-            </div>
-            <div class="stat bg-white rounded-box shadow">
-                <div class="stat-title text-gray-500 uppercase text-xs">En Çok Kitap (Yayınevi)</div>
-                <div id="statTopPub" class="text-sm font-bold truncate text-secondary italic">...</div>
-            </div>
-            <div class="stat bg-white rounded-box shadow">
-                <div class="stat-title text-gray-500 uppercase text-xs">Okuyanlar Özeti</div>
-                <div id="statBorrowed" class="text-[10px] font-semibold text-gray-600 max-h-12 overflow-y-auto">...</div>
-            </div>
-        </div>
-
-        <div class="flex flex-col lg:flex-row gap-8">
-            <div class="w-full lg:w-1/4 bg-white p-6 rounded-box shadow-sm h-fit">
-                <h3 class="font-bold mb-4 border-b pb-2 flex items-center gap-2">🔍 Arama & Filtre</h3>
-                <input type="text" id="searchInput" placeholder="Kitap veya Yazar Ara..." class="input input-bordered w-full mb-4" onkeyup="filterBooks()" />
-                
-                <label class="label text-xs font-bold opacity-50 uppercase">Yayınevi</label>
-                <select id="pubFilter" class="select select-bordered w-full mb-4 select-sm" onchange="filterBooks()">
-                    <option value="">Tüm Yayınevleri</option>
-                </select>
-
-                <label class="label text-xs font-bold opacity-50 uppercase">Okuyan Kişi</label>
-                <select id="readerFilter" class="select select-bordered w-full mb-4 select-sm" onchange="filterBooks()">
-                    <option value="">Herkesin Okudukları</option>
-                </select>
-
-                <div id="adminPanel" class="hidden mt-8 p-4 border-2 border-dashed border-primary rounded-lg bg-primary/5">
-                    <h4 class="font-bold text-primary mb-2 text-center text-sm">Toplu Kitap Yükleme</h4>
-                    <p class="text-[10px] mb-4 text-center opacity-60">Sütunlar: ISBN, Kitap Adı, Yazar, Yayınevi, Okuyan</p>
-                    <input type="file" id="excelInput" class="hidden" accept=".xlsx, .xls" onchange="handleExcel(event)" />
-                    <button onclick="document.getElementById('excelInput').click()" class="btn btn-primary btn-sm w-full font-bold">EXCEL DOSYASI SEÇ</button>
-                    <div id="uploadProgress" class="mt-4 text-center text-xs font-bold text-secondary animate-pulse"></div>
-                </div>
-            </div>
-
-            <div class="w-full lg:w-3/4">
-                <div id="bookList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <div class="col-span-full text-center py-20 opacity-40 italic">
-                        Kütüphane rafları düzenleniyor...
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="form-group">
+      <label>Şifre</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
     </div>
 
-    <dialog id="login_modal" class="modal">
-        <div class="modal-box">
-            <h3 class="font-bold text-lg">Yönetici Girişi</h3>
-            <div class="py-4 space-y-4">
-                <input type="email" id="loginEmail" placeholder="E-posta" class="input input-bordered w-full" />
-                <input type="password" id="loginPass" placeholder="Şifre" class="input input-bordered w-full" />
-            </div>
-            <div class="modal-action">
-                <button class="btn btn-primary w-full" onclick="login()">Giriş Yap</button>
-            </div>
-        </div>
-    </dialog>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:15px;margin-top:8px;" onclick="doLogin()" id="login-btn">
+      Giriş Yap
+    </button>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--muted);">
+      Hesabınız yok mu? <a href="#" onclick="toggleMode()" id="mode-link">Kayıt Ol</a>
+    </p>
+    <div id="register-section" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+      <div class="form-group">
+        <label>Ad Soyad</label>
+        <input type="text" id="display-name" placeholder="Adınız Soyadınız">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:15px;" onclick="doRegister()">
+        Hesap Oluştur
+      </button>
+      <p style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center;">Not: Yeni hesaplar admin onayı gerektirir.</p>
+    </div>
+  </div>
+</div>
 
-        // Senin Bilgilerin
-        const firebaseConfig = {
-            apiKey: "AIzaSyCzFiK-_AzAOWq9Ffm2rXMAXI48GZJtsWI",
-            authDomain: "mylibrary-1d84a.firebaseapp.com",
-            projectId: "mylibrary-1d84a",
-            storageBucket: "mylibrary-1d84a.firebasestorage.app",
-            messagingSenderId: "1030099014949",
-            appId: "1:1030099014949:web:0a3a379d2d5aaa703f36cc"
-        };
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script>
+let registerMode = false;
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    const doc = await db.collection('users').doc(user.uid).get();
+    if (doc.exists && doc.data().approved) {
+      window.location = 'dashboard.html';
+    }
+  }
+});
 
-        let allBooks = [];
+function toggleMode() {
+  registerMode = !registerMode;
+  document.getElementById('register-section').style.display = registerMode ? 'block' : 'none';
+  document.getElementById('mode-link').textContent = registerMode ? 'Giriş Yap' : 'Kayıt Ol';
+  document.getElementById('login-btn').textContent = registerMode ? '← Giriş Yap' : 'Giriş Yap';
+}
 
-        // KİTAPLARI GETİR
-        async function fetchBooks() {
-            try {
-                const q = query(collection(db, "books"), orderBy("title", "asc"));
-                const querySnapshot = await getDocs(q);
-                allBooks = [];
-                querySnapshot.forEach((doc) => allBooks.push({ id: doc.id, ...doc.data() }));
-                renderBooks(allBooks);
-                updateStats();
-                fillFilters();
-            } catch (e) {
-                console.error("Hata:", e);
-                document.getElementById('bookList').innerHTML = "Veritabanı bağlantısı bekleniyor veya boş.";
-            }
-        }
+function showError(msg) {
+  const el = document.getElementById('err-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
 
-        // KİTAPLARI EKRANA ÇİZ
-        function renderBooks(data) {
-            const list = document.getElementById('bookList');
-            if(data.length === 0) { list.innerHTML = "Henüz kitap eklenmemiş veya arama sonucu bulunamadı."; return; }
-            list.innerHTML = data.map(book => `
-                <div class="card bg-white shadow-sm hover:shadow-md border border-base-300 transition-all rounded-lg overflow-hidden">
-                    <div class="p-4">
-                        <h2 class="text-sm font-black text-primary uppercase leading-tight mb-1">${book.title || 'İsimsiz'}</h2>
-                        <p class="text-[11px] font-bold opacity-60 italic mb-3 text-gray-700">👤 ${book.author || 'Bilinmiyor'}</p>
-                        <div class="flex items-center justify-between mt-auto">
-                             <span class="badge badge-outline badge-xs text-[9px] uppercase border-gray-300">${book.publisher || '-'}</span>
-                             <div class="flex gap-1">
-                                ${(book.readers || []).map(r => `<span class="badge badge-secondary badge-xs font-bold px-1">${r}</span>`).join('')}
-                             </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value;
+  if (!email || !pass) return showError('Lütfen tüm alanları doldurun.');
+  try {
+    const cred = await auth.signInWithEmailAndPassword(email, pass);
+    const doc = await db.collection('users').doc(cred.user.uid).get();
+    if (!doc.exists || !doc.data().approved) {
+      auth.signOut();
+      showError('Hesabınız henüz onaylanmamış. Lütfen admin ile iletişime geçin.');
+      return;
+    }
+    window.location = 'dashboard.html';
+  } catch(e) {
+    showError('E-posta veya şifre hatalı.');
+  }
+}
 
-        // İSTATİSTİKLERİ HESAPLA
-        function updateStats() {
-            document.getElementById('statTotal').innerText = allBooks.length;
-            const authors = {}, pubs = {}, readersCount = {};
-            allBooks.forEach(b => {
-                if(b.author) authors[b.author] = (authors[b.author] || 0) + 1;
-                if(b.publisher) pubs[b.publisher] = (pubs[b.publisher] || 0) + 1;
-                (b.readers || []).forEach(r => readersCount[r] = (readersCount[r] || 0) + 1);
-            });
-            const topAuthor = Object.entries(authors).sort((a,b) => b[1]-a[1])[0];
-            const topPub = Object.entries(pubs).sort((a,b) => b[1]-a[1])[0];
-            
-            document.getElementById('statTopAuthor').innerText = topAuthor ? `${topAuthor[0]} (${topAuthor[1]})` : '-';
-            document.getElementById('statTopPub').innerText = topPub ? `${topPub[0]} (${topPub[1]})` : '-';
-            document.getElementById('statBorrowed').innerText = Object.entries(readersCount).map(e => `${e[0]}: ${e[1]}`).join(' | ');
-        }
+async function doRegister() {
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value;
+  const name = document.getElementById('display-name').value.trim();
+  if (!email || !pass || !name) return showError('Lütfen tüm alanları doldurun.');
+  if (pass.length < 6) return showError('Şifre en az 6 karakter olmalıdır.');
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await cred.user.updateProfile({ displayName: name });
+    await db.collection('users').doc(cred.user.uid).set({
+      name, email, role: 'user', approved: false, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    auth.signOut();
+    showError('Hesabınız oluşturuldu. Admin onayını bekleyin.');
+  } catch(e) {
+    showError(e.message);
+  }
+}
 
-        // FİLTRELERİ DOLDUR
-        function fillFilters() {
-            const pSel = document.getElementById('pubFilter'), rSel = document.getElementById('readerFilter');
-            const pUnique = [...new Set(allBooks.map(b => b.publisher).filter(Boolean))].sort();
-            const rUnique = [...new Set(allBooks.flatMap(b => b.readers || []).filter(Boolean))].sort();
-            pSel.innerHTML = '<option value="">Tüm Yayınevleri</option>' + pUnique.map(p => `<option value="${p}">${p}</option>`).join('');
-            rSel.innerHTML = '<option value="">Tüm Okuyanlar</option>' + rUnique.map(r => `<option value="${r}">${r}</option>`).join('');
-        }
-
-        // ARAMA FONKSİYONU
-        window.filterBooks = () => {
-            const s = document.getElementById('searchInput').value.toLowerCase();
-            const p = document.getElementById('pubFilter').value;
-            const r = document.getElementById('readerFilter').value;
-            const filtered = allBooks.filter(b => {
-                const mS = (b.title || "").toLowerCase().includes(s) || (b.author || "").toLowerCase().includes(s);
-                const mP = p === "" || b.publisher === p;
-                const mR = r === "" || (b.readers && b.readers.includes(r));
-                return mS && mP && mR;
-            });
-            renderBooks(filtered);
-        }
-
-        // --- AKILLI EXCEL YÜKLEME ---
-        window.handleExcel = async (e) => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            const progress = document.getElementById('uploadProgress');
-            
-            reader.onload = async (event) => {
-                try {
-                    const data = new Uint8Array(event.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const json = XLSX.utils.sheet_to_json(sheet);
-
-                    progress.innerText = "Yükleme Hazırlanıyor...";
-
-                    for (let i = 0; i < json.length; i++) {
-                        const row = json[i];
-                        
-                        // Akıllı Başlık Bulucu
-                        const getVal = (possibleNames) => {
-                            const key = Object.keys(row).find(k => 
-                                possibleNames.includes(k.trim().toLowerCase())
-                            );
-                            return key ? row[key] : null;
-                        };
-
-                        const title = getVal(["kitap adı", "kitap adi", "kitapadı", "title", "kitap_adi", "adı"]) || "İsimsiz Kitap";
-                        const author = getVal(["yazar", "author", "yazarı", "yazari", "yazar adı"]) || "Bilinmeyen Yazar";
-                        const pub = getVal(["yayınevi", "yayinevi", "publisher", "basımevi"]) || "Bilinmeyen Yayınevi";
-                        const okuyan = getVal(["okuyan", "reader", "okuyanlar", "okuyan kişi"]) || "";
-                        
-                        const readersArr = okuyan ? okuyan.toString().split(',').map(s => s.trim()) : [];
-
-                        await addDoc(collection(db, "books"), {
-                            isbn: getVal(["isbn", "is b n"]) ? getVal(["isbn", "is b n"]).toString() : "",
-                            title: title.toString(),
-                            author: author.toString(),
-                            publisher: pub.toString(),
-                            readers: readersArr
-                        });
-
-                        progress.innerText = `🔄 İşleniyor: ${i+1} / ${json.length}`;
-                    }
-                    alert("Tüm kitaplar başarıyla kütüphaneye eklendi!");
-                    location.reload();
-                } catch (err) {
-                    alert("Yükleme sırasında bir hata oluştu: " + err.message);
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        };
-
-        // ADMIN GİRİŞ ÇIKIŞ
-        window.showLoginModal = () => document.getElementById('login_modal').showModal();
-        window.login = async () => {
-            try {
-                await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPass').value);
-                document.getElementById('login_modal').close();
-            } catch (e) { alert("E-posta veya şifre hatalı!"); }
-        };
-        window.logout = () => signOut(auth);
-
-        onAuthStateChanged(auth, u => {
-            const adminP = document.getElementById('adminPanel'), status = document.getElementById('adminStatus'), btn = document.getElementById('loginBtn');
-            if(u) { adminP.classList.remove('hidden'); status.classList.remove('hidden'); btn.classList.add('hidden'); }
-            else { adminP.classList.add('hidden'); status.classList.add('hidden'); btn.classList.remove('hidden'); }
-        });
-
-        // Başlat
-        fetchBooks();
-    </script>
+document.addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+</script>
 </body>
 </html>
