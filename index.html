@@ -16,8 +16,8 @@
         </div>
         <div class="flex-none gap-2">
             <div id="adminStatus" class="hidden flex items-center gap-2">
-                <span class="badge badge-success">Admin</span>
-                <button onclick="logout()" class="btn btn-sm btn-outline btn-content">Çıkış</button>
+                <span class="badge badge-success font-bold">Yönetici Girişi Yapıldı</span>
+                <button onclick="logout()" class="btn btn-sm btn-outline btn-content">Çıkış Yap</button>
             </div>
             <button id="loginBtn" onclick="showLoginModal()" class="btn btn-sm btn-ghost">Admin Girişi</button>
         </div>
@@ -31,48 +31,45 @@
             </div>
             <div class="stat bg-white rounded-box shadow">
                 <div class="stat-title text-gray-500 uppercase">En Çok Kitap (Yazar)</div>
-                <div id="statTopAuthor" class="text-sm font-bold truncate">Yükleniyor...</div>
+                <div id="statTopAuthor" class="text-sm font-bold truncate text-secondary">...</div>
             </div>
             <div class="stat bg-white rounded-box shadow">
                 <div class="stat-title text-gray-500 uppercase">En Çok Kitap (Yayınevi)</div>
-                <div id="statTopPub" class="text-sm font-bold truncate">Yükleniyor...</div>
+                <div id="statTopPub" class="text-sm font-bold truncate text-secondary">...</div>
             </div>
             <div class="stat bg-white rounded-box shadow">
-                <div class="stat-title text-gray-500 uppercase">Emanet Kitaplar</div>
-                <div id="statBorrowed" class="stat-value text-secondary">0</div>
+                <div class="stat-title text-gray-500 uppercase">Okuyanlar Verisi</div>
+                <div id="statBorrowed" class="text-[10px] font-semibold overflow-y-auto max-h-12">...</div>
             </div>
         </div>
 
         <div class="flex flex-col lg:flex-row gap-8">
             <div class="w-full lg:w-1/4 bg-white p-6 rounded-box shadow-sm h-fit">
-                <h3 class="font-bold mb-4 flex items-center gap-2">🔍 Filtreleme</h3>
+                <h3 class="font-bold mb-4 flex items-center gap-2 border-b pb-2">🔍 Arama & Filtre</h3>
                 <input type="text" id="searchInput" placeholder="Kitap veya Yazar Ara..." class="input input-bordered w-full mb-4" onkeyup="filterBooks()" />
                 
-                <label class="label"><span class="label-text">Yayınevi Seç</span></label>
-                <select id="pubFilter" class="select select-bordered w-full mb-4" onchange="filterBooks()">
-                    <option value="">Tümü</option>
+                <label class="label text-xs font-bold opacity-50 uppercase">Yayınevi</label>
+                <select id="pubFilter" class="select select-bordered w-full mb-4 select-sm" onchange="filterBooks()">
+                    <option value="">Tüm Yayınevleri</option>
                 </select>
 
-                <label class="label"><span class="label-text">Okuyan Kişi</span></label>
-                <select id="readerFilter" class="select select-bordered w-full mb-4" onchange="filterBooks()">
-                    <option value="">Herkes</option>
+                <label class="label text-xs font-bold opacity-50 uppercase">Okuyan Kişi</label>
+                <select id="readerFilter" class="select select-bordered w-full mb-4 select-sm" onchange="filterBooks()">
+                    <option value="">Tüm Okuyanlar</option>
                 </select>
 
-                <div id="adminPanel" class="hidden mt-8 p-4 border-2 border-dashed border-primary rounded-lg text-center">
-                    <h4 class="font-bold text-primary mb-2">Admin Paneli</h4>
-                    <p class="text-xs mb-4 text-gray-500">Excel dosyasını seçerek 3000 kitabı saniyeler içinde yükleyin.</p>
+                <div id="adminPanel" class="hidden mt-8 p-4 border-2 border-dashed border-primary rounded-lg bg-primary/5">
+                    <h4 class="font-bold text-primary mb-2 text-center">Toplu Kitap Yükleme</h4>
+                    <p class="text-[10px] mb-4 text-center opacity-70">Excel başlıkları: ISBN, Kitap Adı, Yazar, Yayınevi, Okuyan</p>
                     <input type="file" id="excelInput" class="hidden" accept=".xlsx, .xls" onchange="handleExcel(event)" />
-                    <button onclick="document.getElementById('excelInput').click()" class="btn btn-primary btn-sm w-full">EXCEL YÜKLE</button>
-                    <div id="uploadProgress" class="mt-2 text-xs font-bold"></div>
+                    <button onclick="document.getElementById('excelInput').click()" class="btn btn-primary btn-sm w-full">EXCEL DOSYASI SEÇ</button>
+                    <div id="uploadProgress" class="mt-4 text-center text-xs font-bold text-secondary"></div>
                 </div>
             </div>
 
             <div class="w-full lg:w-3/4">
                 <div id="bookList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <div class="col-span-full text-center py-20">
-                        <span class="loading loading-spinner loading-lg text-primary"></span>
-                        <p class="mt-4">Kütüphane Rafları Düzenleniyor...</p>
-                    </div>
+                    <div class="col-span-full text-center py-20 opacity-50">Kütüphane rafları yükleniyor, lütfen bekleyin...</div>
                 </div>
             </div>
         </div>
@@ -80,30 +77,28 @@
 
     <dialog id="login_modal" class="modal">
         <div class="modal-box">
-            <h3 class="font-bold text-lg">Admin Girişi</h3>
+            <h3 class="font-bold text-lg">Admin Paneline Giriş</h3>
             <div class="py-4 space-y-4">
                 <input type="email" id="loginEmail" placeholder="E-posta" class="input input-bordered w-full" />
                 <input type="password" id="loginPass" placeholder="Şifre" class="input input-bordered w-full" />
             </div>
             <div class="modal-action">
-                <button class="btn" onclick="document.getElementById('login_modal').close()">İptal</button>
-                <button class="btn btn-primary" onclick="login()">Giriş Yap</button>
+                <button class="btn btn-primary w-full" onclick="login()">Sisteme Gir</button>
             </div>
         </div>
     </dialog>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, writeBatch, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // BURAYI KENDİ BİLGİLERİNLE DEĞİŞTİR!
         const firebaseConfig = {
             apiKey: "AIzaSyCzFiK-_AzAOWq9Ffm2rXMAXI48GZJtsWI",
             authDomain: "mylibrary-1d84a.firebaseapp.com",
             projectId: "mylibrary-1d84a",
             storageBucket: "mylibrary-1d84a.firebasestorage.app",
-            messagingSenderId: "1030099014949R",
+            messagingSenderId: "1030099014949",
             appId: "1:1030099014949:web:0a3a379d2d5aaa703f36cc"
         };
 
@@ -113,154 +108,130 @@
 
         let allBooks = [];
 
-        // 1. VERİLERİ ÇEK
         async function fetchBooks() {
-            const q = query(collection(db, "books"), orderBy("title", "asc"));
-            const querySnapshot = await getDocs(q);
-            allBooks = [];
-            querySnapshot.forEach((doc) => {
-                allBooks.push({ id: doc.id, ...doc.data() });
-            });
-            renderBooks(allBooks);
-            updateStats();
-            fillFilters();
+            try {
+                const q = query(collection(db, "books"), orderBy("title", "asc"));
+                const querySnapshot = await getDocs(q);
+                allBooks = [];
+                querySnapshot.forEach((doc) => allBooks.push({ id: doc.id, ...doc.data() }));
+                renderBooks(allBooks);
+                updateStats();
+                fillFilters();
+            } catch (e) {
+                console.error("Veri hatası:", e);
+                document.getElementById('bookList').innerHTML = "Veritabanı boş veya bağlantı hatası var.";
+            }
         }
 
-        // 2. KİTAPLARI EKRANA BAS
         function renderBooks(data) {
             const list = document.getElementById('bookList');
+            if(data.length === 0) { list.innerHTML = "Görüntülenecek kitap bulunamadı."; return; }
             list.innerHTML = data.map(book => `
-                <div class="card bg-white shadow-xl hover:shadow-2xl transition-all border-t-4 border-primary">
-                    <div class="card-body p-5">
-                        <h2 class="card-title text-md leading-tight">${book.title}</h2>
-                        <p class="text-sm text-gray-600 font-medium">✍️ ${book.author}</p>
-                        <div class="divider my-1"></div>
-                        <div class="flex flex-wrap gap-1 mt-1">
-                            <span class="badge badge-outline text-[10px]">${book.publisher}</span>
-                            ${book.is_borrowed ? '<span class="badge badge-secondary badge-sm italic">Emanet</span>' : ''}
+                <div class="card bg-white shadow-sm hover:shadow-md border border-base-300 transition-all">
+                    <div class="card-body p-4">
+                        <h2 class="card-title text-sm font-bold text-primary uppercase leading-tight">${book.title}</h2>
+                        <p class="text-xs font-semibold opacity-70">👤 ${book.author}</p>
+                        <div class="mt-2">
+                             <span class="badge badge-outline badge-xs opacity-50 uppercase font-bold">${book.publisher}</span>
                         </div>
-                        <div class="mt-3 flex items-center gap-2">
-                             <span class="text-xs text-gray-400">Okuyanlar:</span>
-                             ${book.readers && book.readers.length > 0 ? 
-                               book.readers.map(r => `<span class="badge badge-primary badge-sm">${r}</span>`).join('') 
-                               : '<span class="text-xs italic text-gray-300">Henüz yok</span>'}
+                        <div class="mt-4 flex flex-wrap gap-1">
+                            ${book.readers && book.readers.length > 0 ? 
+                              book.readers.map(r => `<span class="badge badge-secondary badge-xs px-2 py-2 font-bold">${r}</span>`).join('') : 
+                              '<span class="text-[10px] italic opacity-30">Okunmadı</span>'}
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 3. İSTATİSTİKLERİ HESAPLA
         function updateStats() {
             document.getElementById('statTotal').innerText = allBooks.length;
-            
-            const authors = {};
-            const pubs = {};
-            let borrowedCount = 0;
-
+            const authors = {}, pubs = {}, readersCount = {};
             allBooks.forEach(b => {
-                authors[b.author] = (authors[b.author] || 0) + 1;
-                pubs[b.publisher] = (pubs[b.publisher] || 0) + 1;
-                if(b.is_borrowed) borrowedCount++;
+                if(b.author) authors[b.author] = (authors[b.author] || 0) + 1;
+                if(b.publisher) pubs[b.publisher] = (pubs[b.publisher] || 0) + 1;
+                (b.readers || []).forEach(r => readersCount[r] = (readersCount[r] || 0) + 1);
             });
-
             const topAuthor = Object.entries(authors).sort((a,b) => b[1]-a[1])[0];
             const topPub = Object.entries(pubs).sort((a,b) => b[1]-a[1])[0];
-
+            
             document.getElementById('statTopAuthor').innerText = topAuthor ? `${topAuthor[0]} (${topAuthor[1]})` : '-';
             document.getElementById('statTopPub').innerText = topPub ? `${topPub[0]} (${topPub[1]})` : '-';
-            document.getElementById('statBorrowed').innerText = borrowedCount;
+            document.getElementById('statBorrowed').innerText = Object.entries(readersCount).map(e => `${e[0]}: ${e[1]}`).join(' | ');
         }
 
-        // 4. FİLTRELERİ DOLDUR
         function fillFilters() {
-            const pubSelect = document.getElementById('pubFilter');
-            const readerSelect = document.getElementById('readerFilter');
-            
-            const uniquePubs = [...new Set(allBooks.map(b => b.publisher))].sort();
-            const uniqueReaders = [...new Set(allBooks.flatMap(b => b.readers || []))].sort();
-
-            pubSelect.innerHTML = '<option value="">Tümü</option>' + uniquePubs.map(p => `<option value="${p}">${p}</option>`).join('');
-            readerSelect.innerHTML = '<option value="">Herkes</option>' + uniqueReaders.map(r => `<option value="${r}">${r}</option>`).join('');
+            const pSel = document.getElementById('pubFilter'), rSel = document.getElementById('readerFilter');
+            const pUnique = [...new Set(allBooks.map(b => b.publisher).filter(Boolean))].sort();
+            const rUnique = [...new Set(allBooks.flatMap(b => b.readers || []).filter(Boolean))].sort();
+            pSel.innerHTML = '<option value="">Tüm Yayınevleri</option>' + pUnique.map(p => `<option value="${p}">${p}</option>`).join('');
+            rSel.innerHTML = '<option value="">Tüm Okuyanlar</option>' + rUnique.map(r => `<option value="${r}">${r}</option>`).join('');
         }
 
-        // 5. ARAMA VE FİLTRELEME FONKSİYONU
         window.filterBooks = () => {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const pub = document.getElementById('pubFilter').value;
-            const reader = document.getElementById('readerFilter').value;
-
+            const s = document.getElementById('searchInput').value.toLowerCase();
+            const p = document.getElementById('pubFilter').value;
+            const r = document.getElementById('readerFilter').value;
             const filtered = allBooks.filter(b => {
-                const matchSearch = b.title.toLowerCase().includes(search) || b.author.toLowerCase().includes(search);
-                const matchPub = pub === "" || b.publisher === pub;
-                const matchReader = reader === "" || (b.readers && b.readers.includes(reader));
-                return matchSearch && matchPub && matchReader;
+                const mS = (b.title || "").toLowerCase().includes(s) || (b.author || "").toLowerCase().includes(s);
+                const mP = p === "" || b.publisher === p;
+                const mR = r === "" || (b.readers && b.readers.includes(r));
+                return mS && mP && mR;
             });
             renderBooks(filtered);
         }
 
-        // 6. TOPLU EXCEL YÜKLEME (ADMIN)
         window.handleExcel = async (e) => {
             const file = e.target.files[0];
-            const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data);
-            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
+            const reader = new FileReader();
             const progress = document.getElementById('uploadProgress');
-            progress.innerText = "Yükleniyor... Lütfen bekleyin.";
-
-            // Firebase Batch ile toplu yazma (Her 500 kayıtta bir işlem yapar)
-            let batch = writeBatch(db);
-            let count = 0;
-
-            for (const row of jsonData) {
-                const readersArr = row["Okuyan"] ? row["Okuyan"].toString().split(',').map(s => s.trim()) : [];
-                const docRef = addDoc(collection(db, "books"), {
-                    isbn: row["ISBN"] ? row["ISBN"].toString() : "",
-                    title: row["Kitap Adı"] || "Adsız Kitap",
-                    author: row["Yazar"] || "Bilinmiyor",
-                    publisher: row["Yayınevi"] || "Bilinmiyor",
-                    readers: readersArr,
-                    is_borrowed: false // Excel'de emanet sütunu varsa buraya bağlayabiliriz
-                });
-                count++;
-                if (count % 100 === 0) progress.innerText = `${count} kitap hazırlandı...`;
-            }
             
-            progress.innerText = "Veritabanına aktarılıyor...";
-            // Not: 3000 kayıt için bu işlem biraz sürebilir.
-            alert("İşlem başlatıldı. Tamamlandığında sayfa yenilenecek.");
-            location.reload();
+            reader.onload = async (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(sheet);
+
+                    progress.innerText = "Yükleme Başlatılıyor...";
+
+                    for (let i = 0; i < json.length; i++) {
+                        const row = json[i];
+                        const okuyan = row["Okuyan"] || "";
+                        const readersArr = okuyan ? okuyan.toString().split(',').map(s => s.trim()) : [];
+
+                        await addDoc(collection(db, "books"), {
+                            isbn: row["ISBN"] ? row["ISBN"].toString() : "",
+                            title: row["Kitap Adı"] || "İsimsiz Kitap",
+                            author: row["Yazar"] || "Bilinmeyen Yazar",
+                            publisher: row["Yayınevi"] || "Bilinmeyen Yayınevi",
+                            readers: readersArr
+                        });
+
+                        progress.innerText = `İşleniyor: ${i+1} / ${json.length} Kitap`;
+                    }
+                    alert("Tüm kitaplar başarıyla yüklendi!");
+                    location.reload();
+                } catch (err) {
+                    alert("Yükleme sırasında hata: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
         };
 
-        // 7. AUTH İŞLEMLERİ
         window.showLoginModal = () => document.getElementById('login_modal').showModal();
-        
         window.login = async () => {
-            const email = document.getElementById('loginEmail').value;
-            const pass = document.getElementById('loginPass').value;
             try {
-                await signInWithEmailAndPassword(auth, email, pass);
+                await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPass').value);
                 document.getElementById('login_modal').close();
-            } catch (err) { alert("Hata: " + err.message); }
+            } catch (e) { alert("Hatalı e-posta veya şifre!"); }
         };
-
         window.logout = () => signOut(auth);
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('adminPanel').classList.remove('hidden');
-                document.getElementById('adminStatus').classList.remove('hidden');
-                document.getElementById('loginBtn').classList.add('hidden');
-            } else {
-                document.getElementById('adminPanel').classList.add('hidden');
-                document.getElementById('adminStatus').classList.add('hidden');
-                document.getElementById('loginBtn').classList.remove('hidden');
-            }
+        onAuthStateChanged(auth, u => {
+            const adminP = document.getElementById('adminPanel'), status = document.getElementById('adminStatus'), btn = document.getElementById('loginBtn');
+            if(u) { adminP.classList.remove('hidden'); status.classList.remove('hidden'); btn.classList.add('hidden'); }
+            else { adminP.classList.add('hidden'); status.classList.add('hidden'); btn.classList.remove('hidden'); }
         });
-
-        // Başlat
         fetchBooks();
     </script>
 </body>
