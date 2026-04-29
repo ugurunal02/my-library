@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Kütüphanem</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="nav"></nav>
+
+<!-- Book modal -->
+<div class="modal-overlay" id="book-modal">
+  <div class="modal-box">
+    <h2 class="modal-title" id="modal-title">Kitap Ekle</h2>
+    <input type="hidden" id="edit-id">
+    <div class="form-group">
+      <label>Kitap Adı *</label>
+      <input type="text" id="f-title" placeholder="Kitabın adı">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group">
+        <label>Yazar *</label>
+        <input type="text" id="f-author" placeholder="Yazar adı">
+      </div>
+      <div class="form-group">
+        <label>Yayınevi</label>
+        <input type="text" id="f-publisher" placeholder="Yayınevi">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>ISBN</label>
+      <input type="text" id="f-isbn" placeholder="978-...">
+    </div>
+    <div class="alert alert-error" id="modal-err"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeBookModal()">İptal</button>
+      <button class="btn btn-primary" onclick="saveBook()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('books', this)">📚 Kitaplar</button>
+    <button class="tab-btn" onclick="switchTab('import', this)">📂 Excel İçe Aktar</button>
+    <button class="tab-btn" onclick="switchTab('users', this)">👤 Kullanıcılar</button>
+  </div>
+
+  <!-- BOOKS TAB -->
+  <div id="tab-books">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Kitap Yönetimi</h1>
+        <p class="page-sub" id="book-count">Yükleniyor...</p>
+      </div>
+      <button class="btn btn-primary" onclick="openAddModal()">+ Kitap Ekle</button>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="admin-search" placeholder="Ara..." oninput="adminFilter()">
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kitap Adı</th>
+            <th>Yazar</th>
+            <th>Yayınevi</th>
+            <th>ISBN</th>
+            <th style="text-align:right;padding-right:20px;">İşlem</th>
+          </tr>
+        </thead>
+        <tbody id="admin-tbody">
+          <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted);">Yükleniyor...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="admin-pagination"></div>
+  </div>
+
+  <!-- IMPORT TAB -->
+  <div id="tab-import" style="display:none;">
+    <h1 class="page-title" style="margin-bottom:8px;">Excel İçe Aktarma</h1>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:28px;">3000+ kitabı toplu olarak yükleyin. Excel dosyanız şu sütunları içermelidir: <strong style="color:var(--text);">ISBN, Kitap Adı, Yazar, Yayınevi</strong></p>
+
+    <div class="card" style="margin-bottom:20px;">
+      <h3 style="font-size:16px;margin-bottom:16px;">Şablon İndir</h3>
+      <p style="font-size:14px;color:var(--muted);margin-bottom:14px;">Doğru formatı görmek için örnek şablonu indirin.</p>
+      <button class="btn btn-ghost" onclick="downloadTemplate()">⬇ Örnek Şablon İndir (.xlsx)</button>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:16px;margin-bottom:16px;">Dosya Yükle</h3>
+      <div style="border:2px dashed var(--border);border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:border-color .2s;"
+           id="drop-zone" ondragover="event.preventDefault()" ondrop="handleDrop(event)" onclick="document.getElementById('file-input').click()">
+        <div style="font-size:36px;margin-bottom:12px;">📂</div>
+        <div style="font-weight:600;margin-bottom:6px;">Dosyayı buraya sürükleyin veya tıklayın</div>
+        <div style="font-size:13px;color:var(--muted);">.xlsx veya .csv dosyaları kabul edilir</div>
+        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleFile(this.files[0])">
+      </div>
+
+      <div id="preview-section" style="display:none;margin-top:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <h4 id="preview-title" style="font-size:15px;"></h4>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost" onclick="document.getElementById('preview-section').style.display='none'">İptal</button>
+            <button class="btn btn-primary" onclick="importBooks()" id="import-btn">Kitapları Yükle</button>
+          </div>
+        </div>
+        <div class="table-wrap" style="max-height:350px;overflow-y:auto;">
+          <table>
+            <thead>
+              <tr><th>ISBN</th><th>Kitap Adı</th><th>Yazar</th><th>Yayınevi</th></tr>
+            </thead>
+            <tbody id="preview-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="import-progress" style="display:none;margin-top:24px;">
+        <div style="margin-bottom:10px;font-size:14px;" id="progress-text">Yükleniyor...</div>
+        <div style="background:var(--bg3);border-radius:6px;height:8px;overflow:hidden;">
+          <div id="progress-bar" style="height:100%;background:var(--accent);width:0%;transition:width .3s;border-radius:6px;"></div>
+        </div>
+      </div>
+
+      <div class="alert alert-success" id="import-success" style="margin-top:16px;"></div>
+      <div class="alert alert-error" id="import-error" style="margin-top:16px;"></div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h3 style="font-size:15px;margin-bottom:12px;">Sütun Eşleştirme Rehberi</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Sistem aşağıdaki sütun adlarını otomatik tanır (büyük/küçük harf farketmez):</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;">
+        <div style="padding:10px;background:var(--bg3);border-radius:8px;"><strong>ISBN:</strong> <span style="color:var(--muted);">isbn, ISBN, ISBN No</span></div>
+        <div style="padding:10px;background:var(--bg3);border-radius:8px;"><strong>Kitap Adı:</strong> <span style="color:var(--muted);">ad, name, title, kitap adı, kitap</span></div>
+        <div style="padding:10px;background:var(--bg3);border-radius:8px;"><strong>Yazar:</strong> <span style="color:var(--muted);">yazar, author, yazarı</span></div>
+        <div style="padding:10px;background:var(--bg3);border-radius:8px;"><strong>Yayınevi:</strong> <span style="color:var(--muted);">yayınevi, publisher, yayın evi</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS TAB -->
+  <div id="tab-users" style="display:none;">
+    <h1 class="page-title" style="margin-bottom:24px;">Kullanıcı Yönetimi</h1>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Ad Soyad</th><th>E-posta</th><th>Rol</th><th>Durum</th><th style="text-align:right;padding-right:20px;">İşlem</th></tr>
+        </thead>
+        <tbody id="users-tbody"><tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted);">Yükleniyor...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth.js"></script>
+<!-- SheetJS for Excel parsing -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+let allBooks = [], adminFiltered = [], adminPage = 1;
+const PER = 25;
+let importData = [];
+
+async function onAuthReady(user) {
+  if (user.role !== 'admin') { window.location = 'dashboard.html'; return; }
+  await loadBooks();
+  // Check if ?edit=id
+  const params = new URLSearchParams(location.search);
+  if (params.has('edit')) openEditModal(params.get('edit'));
+}
+
+async function loadBooks() {
+  const snap = await db.collection('books').orderBy('title').get();
+  allBooks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  adminFiltered = [...allBooks];
+  document.getElementById('book-count').textContent = `${allBooks.length} kitap`;
+  renderAdminTable();
+}
+
+function adminFilter() {
+  const q = document.getElementById('admin-search').value.toLowerCase();
+  adminFiltered = allBooks.filter(b =>
+    (b.title||'').toLowerCase().includes(q) || (b.author||'').toLowerCase().includes(q) || (b.isbn||'').includes(q)
+  );
+  adminPage = 1;
+  renderAdminTable();
+}
+
+function renderAdminTable() {
+  const start = (adminPage - 1) * PER;
+  const page = adminFiltered.slice(start, start + PER);
+  const tbody = document.getElementById('admin-tbody');
+  if (!page.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted);">Sonuç yok.</td></tr>`; return; }
+  tbody.innerHTML = page.map(b => `
+    <tr>
+      <td><strong>${esc(b.title)}</strong></td>
+      <td>${esc(b.author||'—')}</td>
+      <td>${esc(b.publisher||'—')}</td>
+      <td style="font-family:monospace;font-size:13px;color:var(--muted);">${esc(b.isbn||'—')}</td>
+      <td style="text-align:right;padding-right:16px;display:flex;gap:6px;justify-content:flex-end;padding-top:13px;">
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="openEditModal('${b.id}')">✏️ Düzenle</button>
+        <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;" onclick="deleteBook('${b.id}','${esc(b.title)}')">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+
+  const total = Math.ceil(adminFiltered.length / PER);
+  const pg = document.getElementById('admin-pagination');
+  if (total <= 1) { pg.innerHTML=''; return; }
+  let html = `<button class="page-btn" ${adminPage===1?'disabled':''} onclick="adminGoPage(${adminPage-1})">‹</button>`;
+  for (let i=1; i<=total; i++) {
+    if (i===1||i===total||Math.abs(i-adminPage)<=2) html += `<button class="page-btn ${i===adminPage?'active':''}" onclick="adminGoPage(${i})">${i}</button>`;
+    else if (Math.abs(i-adminPage)===3) html += `<span style="color:var(--muted);padding:0 4px;">…</span>`;
+  }
+  html += `<button class="page-btn" ${adminPage===total?'disabled':''} onclick="adminGoPage(${adminPage+1})">›</button>`;
+  pg.innerHTML = html;
+}
+
+function adminGoPage(p) { adminPage = p; renderAdminTable(); window.scrollTo(0,0); }
+
+function openAddModal() {
+  document.getElementById('modal-title').textContent = 'Kitap Ekle';
+  document.getElementById('edit-id').value = '';
+  ['title','author','publisher','isbn'].forEach(f => document.getElementById('f-'+f).value = '');
+  document.getElementById('book-modal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const book = allBooks.find(b => b.id === id);
+  if (!book) return;
+  document.getElementById('modal-title').textContent = 'Kitap Düzenle';
+  document.getElementById('edit-id').value = id;
+  document.getElementById('f-title').value = book.title || '';
+  document.getElementById('f-author').value = book.author || '';
+  document.getElementById('f-publisher').value = book.publisher || '';
+  document.getElementById('f-isbn').value = book.isbn || '';
+  document.getElementById('book-modal').classList.add('open');
+}
+
+function closeBookModal() { document.getElementById('book-modal').classList.remove('open'); }
+
+async function saveBook() {
+  const id = document.getElementById('edit-id').value;
+  const title = document.getElementById('f-title').value.trim();
+  const author = document.getElementById('f-author').value.trim();
+  const publisher = document.getElementById('f-publisher').value.trim();
+  const isbn = document.getElementById('f-isbn').value.trim();
+  const err = document.getElementById('modal-err');
+
+  if (!title || !author) { err.textContent='Kitap adı ve yazar zorunludur.'; err.style.display='block'; return; }
+  err.style.display='none';
+
+  const data = { title, author, publisher, isbn, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+  if (id) {
+    await db.collection('books').doc(id).update(data);
+    const idx = allBooks.findIndex(b => b.id === id);
+    Object.assign(allBooks[idx], data);
+  } else {
+    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+    data.readBy = [];
+    const ref = await db.collection('books').add(data);
+    allBooks.unshift({ id: ref.id, ...data });
+  }
+  allBooks.sort((a,b) => a.title.localeCompare(b.title, 'tr'));
+  adminFiltered = [...allBooks];
+  document.getElementById('book-count').textContent = `${allBooks.length} kitap`;
+  renderAdminTable();
+  closeBookModal();
+}
+
+async function deleteBook(id, title) {
+  if (!confirm(`"${title}" kitabını silmek istediğinize emin misiniz?`)) return;
+  await db.collection('books').doc(id).delete();
+  allBooks = allBooks.filter(b => b.id !== id);
+  adminFiltered = adminFiltered.filter(b => b.id !== id);
+  document.getElementById('book-count').textContent = `${allBooks.length} kitap`;
+  renderAdminTable();
+}
+
+// === EXCEL IMPORT ===
+function handleDrop(e) {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+}
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      parseRows(rows);
+    } catch(err) {
+      showImportError('Dosya okunamadı: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function colMap(headers, candidates) {
+  const lower = headers.map(h => h.toLowerCase().trim().replace(/\s+/g,' '));
+  for (const c of candidates) {
+    const idx = lower.findIndex(h => h.includes(c));
+    if (idx >= 0) return headers[idx];
+  }
+  return null;
+}
+
+// "Soyadı, Adı" → "Adı Soyadı" dönüştürme
+function fixAuthorName(name) {
+  if (!name) return '';
+  name = name.trim();
+  if (name.includes(',')) {
+    const parts = name.split(',');
+    if (parts.length === 2) return parts[1].trim() + ' ' + parts[0].trim();
+  }
+  return name;
+}
+
+function parseRows(rows) {
+  if (!rows.length) return showImportError('Dosya boş.');
+  const keys = Object.keys(rows[0]);
+  const isbnKey = colMap(keys, ['isbn']);
+  const titleKey = colMap(keys, ['kitap adı','kitap adi','title','ad','name','kitap']);
+  const authorKey = colMap(keys, ['yazar','author','yazarı','yazari']);
+  const pubKey = colMap(keys, ['yayınevi','yayinevi','publisher','yayın evi','yayin evi']);
+  const readerKey = colMap(keys, ['okuyan','reader','okuyanlar']);
+
+  importData = rows.map(r => {
+    const rawAuthor = authorKey ? String(r[authorKey]).trim() : '';
+    const rawReader = readerKey ? String(r[readerKey]).trim() : '';
+    return {
+      isbn: isbnKey ? String(r[isbnKey]).trim() : '',
+      title: titleKey ? String(r[titleKey]).trim() : '',
+      author: fixAuthorName(rawAuthor),
+      publisher: pubKey ? String(r[pubKey]).trim() : '',
+      readBy: rawReader && rawReader !== '' && rawReader.toLowerCase() !== 'undefined' ? [rawReader] : [],
+    };
+  }).filter(r => r.title && r.title !== 'undefined');
+
+  if (!importData.length) return showImportError('Hiç kitap bulunamadı. Sütun adlarını kontrol edin.');
+
+  document.getElementById('preview-title').textContent = `${importData.length} kitap bulundu — önizleme:`;
+  document.getElementById('preview-tbody').innerHTML = importData.slice(0,50).map(r =>
+    `<tr><td style="font-family:monospace;font-size:12px;">${esc(r.isbn)}</td><td>${esc(r.title)}</td><td>${esc(r.author)}</td><td>${esc(r.publisher)}</td></tr>`
+  ).join('') + (importData.length > 50 ? `<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:10px;">... ve ${importData.length-50} kitap daha</td></tr>` : '');
+  document.getElementById('preview-section').style.display = 'block';
+}
+
+async function importBooks() {
+  const btn = document.getElementById('import-btn');
+  btn.disabled = true;
+  document.getElementById('preview-section').style.display = 'none';
+  document.getElementById('import-progress').style.display = 'block';
+
+  // Batch write (500 per batch)
+  const BATCH_SIZE = 400;
+  let done = 0;
+  for (let i = 0; i < importData.length; i += BATCH_SIZE) {
+    const batch = db.batch();
+    const chunk = importData.slice(i, i + BATCH_SIZE);
+    chunk.forEach(book => {
+      const ref = db.collection('books').doc();
+      batch.set(ref, { ...book, readBy: [], createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    });
+    await batch.commit();
+    done += chunk.length;
+    const pct = Math.round(done / importData.length * 100);
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = `${done} / ${importData.length} kitap yüklendi...`;
+  }
+
+  document.getElementById('import-progress').style.display = 'none';
+  const s = document.getElementById('import-success');
+  s.textContent = `✓ ${importData.length} kitap başarıyla yüklendi!`;
+  s.style.display = 'block';
+  btn.disabled = false;
+  await loadBooks();
+  switchTab('books', document.querySelector('.tab-btn'));
+}
+
+function showImportError(msg) {
+  const el = document.getElementById('import-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function downloadTemplate() {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['ISBN', 'Kitap Adı', 'Yazar', 'Yayınevi'],
+    ['978-975-xxx-xxx', 'Örnek Kitap', 'Örnek Yazar', 'Örnek Yayınevi'],
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Kitaplar');
+  XLSX.writeFile(wb, 'kutuphane_sablon.xlsx');
+}
+
+// === USERS ===
+async function loadUsers() {
+  const snap = await db.collection('users').get();
+  const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td><strong>${esc(u.name||'—')}</strong></td>
+      <td style="font-size:13px;color:var(--muted);">${esc(u.email||'—')}</td>
+      <td><span class="badge ${u.role==='admin'?'badge-read':'badge-unread'}">${u.role==='admin'?'Admin':'Kullanıcı'}</span></td>
+      <td><span class="badge ${u.approved?'badge-read':'badge-unread'}">${u.approved?'Onaylı':'Bekliyor'}</span></td>
+      <td style="text-align:right;padding-right:16px;">
+        ${!u.approved ? `<button class="btn btn-primary" style="padding:6px 14px;font-size:12px;" onclick="approveUser('${u.id}')">✓ Onayla</button>` : ''}
+        ${u.role!=='admin' ? `<button class="btn btn-ghost" style="padding:6px 14px;font-size:12px;margin-left:4px;" onclick="makeAdmin('${u.id}')">Admin Yap</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function approveUser(uid) {
+  await db.collection('users').doc(uid).update({ approved: true });
+  loadUsers();
+}
+
+async function makeAdmin(uid) {
+  if (!confirm('Bu kullanıcıyı admin yapmak istediğinize emin misiniz?')) return;
+  await db.collection('users').doc(uid).update({ role: 'admin' });
+  loadUsers();
+}
+
+// TABS
+function switchTab(tab, btn) {
+  ['books','import','users'].forEach(t => document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (tab === 'users') loadUsers();
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.getElementById('book-modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeBookModal(); });
+</script>
+</body>
+</html>
